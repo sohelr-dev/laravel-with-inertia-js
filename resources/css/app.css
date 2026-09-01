@@ -1,11 +1,62 @@
-@import 'tailwindcss';
+:root {
+    --bd-green: #006a4e;
+    --bd-green-dark: #00543e;
+    --bd-red: #f42a41;
+}
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+body {
+    background-color: #f5f7f6;
+}
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+/* Primary color -> Bangladesh flag green */
+.btn-primary {
+    --bs-btn-bg: var(--bd-green);
+    --bs-btn-border-color: var(--bd-green);
+    --bs-btn-hover-bg: var(--bd-green-dark);
+    --bs-btn-hover-border-color: var(--bd-green-dark);
+    --bs-btn-active-bg: var(--bd-green-dark);
+    --bs-btn-active-border-color: var(--bd-green-dark);
+    --bs-btn-disabled-bg: var(--bd-green);
+    --bs-btn-disabled-border-color: var(--bd-green);
+}
+
+.bg-primary {
+    background-color: var(--bd-green) !important;
+}
+
+.text-primary {
+    color: var(--bd-green) !important;
+}
+
+.border-primary {
+    border-color: var(--bd-green) !important;
+}
+
+/* Accent color -> Bangladesh flag red */
+.btn-danger {
+    --bs-btn-bg: var(--bd-red);
+    --bs-btn-border-color: var(--bd-red);
+}
+
+.text-danger {
+    color: var(--bd-red) !important;
+}
+
+.link-primary {
+    color: var(--bd-green) !important;
+}
+
+/* Card with red top accent, like the red circle on the flag */
+.card-bd-accent {
+    border-top: 4px solid var(--bd-red);
+}
+
+.form-control:focus {
+    border-color: var(--bd-green);
+    box-shadow: 0 0 0 0.25rem rgba(0, 106, 78, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: var(--bd-green);
+    border-color: var(--bd-green);
 }
