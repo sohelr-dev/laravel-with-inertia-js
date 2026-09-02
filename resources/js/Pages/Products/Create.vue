@@ -1,6 +1,6 @@
 <script setup>
 import { Link, useForm } from '@inertiajs/vue3';
-import AppLayout from '../../Layouts/AppLayout.vue';
+import AdminLayout from '../../Layouts/AdminLayout.vue';
 
 const form = useForm({
     name: '',
@@ -21,9 +21,12 @@ const submit = () => {
 </script>
 
 <template>
-    <AppLayout>
+    <AdminLayout title="Create Product">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="h3 mb-0">Create Product</h1>
+            <div>
+                <h2 class="h5 mb-1">Create Product</h2>
+                <p class="text-muted small mb-0">Add a new item to your catalog and starting inventory.</p>
+            </div>
             <Link href="/products" class="btn btn-outline-secondary btn-sm">Back to Products</Link>
         </div>
 
@@ -172,5 +175,5 @@ const submit = () => {
                 </form>
             </div>
         </div>
-    </AppLayout>
+    </AdminLayout>
 </template>

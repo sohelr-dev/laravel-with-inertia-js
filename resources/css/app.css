@@ -60,3 +60,263 @@ body {
     background-color: var(--bd-green);
     border-color: var(--bd-green);
 }
+
+/* ---------- Admin / POS app shell ---------- */
+
+.admin-shell {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f1f4f3;
+}
+
+.admin-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 248px;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, var(--bd-green-dark), var(--bd-green));
+    color: rgba(255, 255, 255, 0.92);
+    z-index: 1040;
+    transition: transform 0.2s ease;
+}
+
+.admin-sidebar__brand {
+    padding: 1.25rem 1.25rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.admin-sidebar__logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--bd-red);
+    color: #fff;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.admin-sidebar__brand-text {
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.05rem;
+    line-height: 1.2;
+}
+
+.admin-sidebar__nav {
+    flex: 1 1 auto;
+    padding: 1rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    overflow-y: auto;
+}
+
+.admin-sidebar__footer {
+    padding: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.admin-sidebar__link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.85rem;
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.82);
+    text-decoration: none;
+    font-size: 0.925rem;
+    font-weight: 500;
+    border-left: 3px solid transparent;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.admin-sidebar__link:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.admin-sidebar__link--active {
+    background-color: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    border-left-color: var(--bd-red);
+}
+
+.admin-sidebar__icon {
+    width: 19px;
+    height: 19px;
+    flex-shrink: 0;
+}
+
+.sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1035;
+}
+
+.admin-main {
+    flex: 1 1 auto;
+    margin-left: 248px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.admin-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.5rem;
+    background: #fff;
+    border-bottom: 1px solid #e6e9e8;
+}
+
+.admin-topbar__title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 0;
+    color: #1c2b27;
+}
+
+.admin-topbar__toggle {
+    border: 0;
+    background: none;
+    padding: 0.25rem;
+    color: #1c2b27;
+    line-height: 0;
+}
+
+.admin-topbar__user {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid #e6e9e8;
+    border-radius: 999px;
+    padding: 0.3rem 0.9rem 0.3rem 0.3rem;
+    font-weight: 500;
+    color: #1c2b27;
+}
+
+.admin-topbar__avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--bd-green);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.admin-content {
+    flex: 1 1 auto;
+    padding: 1.75rem;
+}
+
+@media (max-width: 991.98px) {
+    .admin-sidebar {
+        transform: translateX(-100%);
+    }
+
+    .admin-sidebar--open {
+        transform: translateX(0);
+    }
+
+    .admin-main {
+        margin-left: 0;
+    }
+}
+
+/* ---------- Stat cards ---------- */
+
+.stat-card {
+    border: 0;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(16, 24, 22, 0.06);
+    padding: 1.25rem 1.4rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-card__icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-card__value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1c2b27;
+    line-height: 1.2;
+}
+
+.stat-card__label {
+    font-size: 0.82rem;
+    color: #6b7a76;
+    font-weight: 500;
+}
+
+/* ---------- POS terminal ---------- */
+
+.pos-product {
+    cursor: pointer;
+    border: 1px solid #e6e9e8;
+    border-radius: 12px;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
+}
+
+.pos-product:hover {
+    border-color: var(--bd-green);
+    box-shadow: 0 4px 12px rgba(0, 106, 78, 0.12);
+}
+
+.pos-product:active {
+    transform: scale(0.98);
+}
+
+.pos-product--disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.pos-product--disabled:hover {
+    border-color: #e6e9e8;
+    box-shadow: none;
+}
+
+.pos-cart {
+    position: sticky;
+    top: 88px;
+}
+
+.pos-category-pill {
+    border-radius: 999px;
+    padding: 0.35rem 0.95rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid #dde2e0;
+    background: #fff;
+    color: #445049;
+}
+
+.pos-category-pill--active {
+    background: var(--bd-green);
+    border-color: var(--bd-green);
+    color: #fff;
+}

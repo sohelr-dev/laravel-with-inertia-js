@@ -98,6 +98,14 @@ class PosController extends Controller
             return $sale;
         });
 
-        return redirect()->route('pos.index')->with('success', "Sale {$sale->invoice_no} completed.");
+        return redirect()->route('pos.index')
+            ->with('success', "Sale {$sale->invoice_no} completed.")
+            ->with('receipt', [
+                'invoice_no' => $sale->invoice_no,
+                'total' => $sale->total,
+                'paid_amount' => $sale->paid_amount,
+                'change_amount' => $sale->change_amount,
+                'payment_method' => $sale->payment_method,
+            ]);
     }
 }

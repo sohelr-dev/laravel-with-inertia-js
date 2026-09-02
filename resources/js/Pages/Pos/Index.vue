@@ -1,7 +1,7 @@
 <script setup>
 import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import AppLayout from '../../Layouts/AppLayout.vue';
+import AdminLayout from '../../Layouts/AdminLayout.vue';
 
 const props = defineProps({
     products: Array,
@@ -13,6 +13,7 @@ const page = usePage();
 const search = ref('');
 const activeCategory = ref('');
 const cart = ref([]);
+const lastReceipt = ref(page.props.flash?.receipt ?? null);
 
 const filteredProducts = computed(() => {
     return props.products.filter((product) => {
@@ -28,8 +29,10 @@ const filteredProducts = computed(() => {
 });
 
 const cartQuantity = (productId) => cart.value.find((line) => line.product.id === productId)?.quantity ?? 0;
+const cartItemCount = computed(() => cart.value.reduce((sum, line) => sum + line.quantity, 0));
 
 const addToCart = (product) => {
+    lastReceipt.value = null;
     const line = cart.value.find((entry) => entry.product.id === product.id);
 
     if (line) {
@@ -64,7 +67,7 @@ const subtotal = computed(() => cart.value.reduce((sum, line) => sum + line.prod
 const form = useForm({
     items: [],
     discount: 0,
-    paid_amount: 0,
+    paid_amount: '',
     payment_method: 'cash',
 });
 
@@ -74,6 +77,7 @@ const changeDue = computed(() => Math.max((Number(form.paid_amount) || 0) - tota
 const formatMoney = (value) => Number(value).toFixed(2);
 
 const checkout = () => {
+    lastReceipt.value = null;
     form.items = cart.value.map((line) => ({ product_id: line.product.id, quantity: line.quantity }));
     form.paid_amount = form.paid_amount || total.value;
 
@@ -82,37 +86,50 @@ const checkout = () => {
         onSuccess: () => {
             clearCart();
             form.reset('discount', 'paid_amount');
+            lastReceipt.value = page.props.flash?.receipt ?? null;
         },
     });
 };
 </script>
 
 <template>
-    <AppLayout>
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="h3 mb-0">Point of Sale</h1>
-        </div>
-
-        <div v-if="page.props.flash?.success" class="alert alert-success">{{ page.props.flash.success }}</div>
+    <AdminLayout title="Point of Sale">
         <div v-if="form.errors.items" class="alert alert-danger">{{ form.errors.items }}</div>
         <div v-if="form.errors.paid_amount" class="alert alert-danger">{{ form.errors.paid_amount }}</div>
 
+        <div v-if="lastReceipt" class="alert alert-success d-flex justify-content-between align-items-center">
+            <div>
+                <strong>{{ lastReceipt.invoice_no }}</strong> completed —
+                {{ formatMoney(lastReceipt.total) }} paid via {{ lastReceipt.payment_method }},
+                change due {{ formatMoney(lastReceipt.change_amount) }}.
+            </div>
+            <button type="button" class="btn-close" @click="lastReceipt = null"></button>
+        </div>
+
         <div class="row g-4">
             <div class="col-lg-8">
-                <div class="card shadow-sm border-0 card-bd-accent">
+                <div class="card border-0 shadow-sm">
                     <div class="card-body p-4">
-                        <input
-                            type="search"
-                            class="form-control mb-3"
-                            placeholder="Search by name, SKU or barcode"
-                            v-model="search"
-                        >
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-white border-end-0">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
+                                </svg>
+                            </span>
+                            <input
+                                type="search"
+                                class="form-control border-start-0"
+                                placeholder="Search by name, SKU or barcode"
+                                v-model="search"
+                                autofocus
+                            >
+                        </div>
 
                         <div class="d-flex flex-wrap gap-2 mb-3">
                             <button
                                 type="button"
-                                class="btn btn-sm"
-                                :class="activeCategory === '' ? 'btn-primary' : 'btn-outline-secondary'"
+                                class="pos-category-pill"
+                                :class="{ 'pos-category-pill--active': activeCategory === '' }"
                                 @click="activeCategory = ''"
                             >
                                 All
@@ -121,8 +138,8 @@ const checkout = () => {
                                 v-for="category in categories"
                                 :key="category"
                                 type="button"
-                                class="btn btn-sm"
-                                :class="activeCategory === category ? 'btn-primary' : 'btn-outline-secondary'"
+                                class="pos-category-pill"
+                                :class="{ 'pos-category-pill--active': activeCategory === category }"
                                 @click="activeCategory = category"
                             >
                                 {{ category }}
@@ -132,25 +149,25 @@ const checkout = () => {
                         <div class="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-3">
                             <div v-for="product in filteredProducts" :key="product.id" class="col">
                                 <div
-                                    class="card h-100 border-0 shadow-sm"
-                                    :class="product.stock <= 0 ? 'opacity-50' : 'cursor-pointer'"
+                                    class="card pos-product h-100 position-relative"
+                                    :class="{ 'pos-product--disabled': product.stock <= 0 }"
                                     role="button"
                                     :tabindex="product.stock > 0 ? 0 : -1"
                                     @click="addToCart(product)"
                                     @keydown.enter="addToCart(product)"
                                 >
+                                    <span v-if="cartQuantity(product.id)" class="badge text-bg-primary position-absolute top-0 end-0 m-2">
+                                        {{ cartQuantity(product.id) }}
+                                    </span>
                                     <div class="card-body p-3">
                                         <div class="fw-semibold">{{ product.name }}</div>
                                         <div class="text-muted small">{{ product.sku }}</div>
                                         <div class="d-flex justify-content-between align-items-center mt-2">
-                                            <span class="fw-bold">{{ formatMoney(product.price) }}</span>
+                                            <span class="fw-bold text-primary">{{ formatMoney(product.price) }}</span>
                                             <span class="badge" :class="product.stock > 0 ? 'text-bg-light' : 'text-bg-danger'">
                                                 {{ product.stock > 0 ? `${product.stock} ${product.unit}` : 'Out of stock' }}
                                             </span>
                                         </div>
-                                        <span v-if="cartQuantity(product.id)" class="badge text-bg-primary mt-2">
-                                            In cart: {{ cartQuantity(product.id) }}
-                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -164,12 +181,15 @@ const checkout = () => {
             </div>
 
             <div class="col-lg-4">
-                <div class="card shadow-sm border-0 card-bd-accent">
-                    <div class="card-body p-4 d-flex flex-column" style="min-height: 400px;">
-                        <h2 class="h5 mb-3">Cart</h2>
+                <div class="card border-0 shadow-sm pos-cart">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h2 class="h6 mb-0">Cart</h2>
+                            <span class="badge text-bg-light">{{ cartItemCount }} item{{ cartItemCount === 1 ? '' : 's' }}</span>
+                        </div>
 
-                        <div class="flex-grow-1" style="overflow-y: auto; max-height: 320px;">
-                            <div v-if="cart.length === 0" class="text-muted text-center py-4">Cart is empty</div>
+                        <div class="flex-grow-1" style="overflow-y: auto; max-height: 300px;">
+                            <div v-if="cart.length === 0" class="text-muted text-center py-4">Cart is empty — tap a product to add it.</div>
 
                             <div v-for="line in cart" :key="line.product.id" class="d-flex justify-content-between align-items-center mb-3">
                                 <div>
@@ -188,7 +208,7 @@ const checkout = () => {
                         <hr>
 
                         <div class="d-flex justify-content-between mb-2">
-                            <span>Subtotal</span>
+                            <span class="text-muted">Subtotal</span>
                             <span>{{ formatMoney(subtotal) }}</span>
                         </div>
 
@@ -197,9 +217,9 @@ const checkout = () => {
                             <input id="discount" type="number" min="0" step="0.01" class="form-control form-control-sm" v-model="form.discount">
                         </div>
 
-                        <div class="d-flex justify-content-between fw-bold mb-3">
-                            <span>Total</span>
-                            <span>{{ formatMoney(total) }}</span>
+                        <div class="d-flex justify-content-between align-items-baseline mb-3">
+                            <span class="fw-semibold">Total</span>
+                            <span class="fs-4 fw-bold text-primary">{{ formatMoney(total) }}</span>
                         </div>
 
                         <div class="mb-2">
@@ -213,12 +233,12 @@ const checkout = () => {
 
                         <div class="mb-2">
                             <label for="paid_amount" class="form-label small mb-1">Amount Paid</label>
-                            <input id="paid_amount" type="number" min="0" step="0.01" class="form-control form-control-sm" v-model="form.paid_amount">
+                            <input id="paid_amount" type="number" min="0" step="0.01" class="form-control form-control-sm" v-model="form.paid_amount" :placeholder="formatMoney(total)">
                         </div>
 
                         <div class="d-flex justify-content-between text-success mb-3">
                             <span>Change Due</span>
-                            <span>{{ formatMoney(changeDue) }}</span>
+                            <span class="fw-semibold">{{ formatMoney(changeDue) }}</span>
                         </div>
 
                         <button
@@ -242,11 +262,5 @@ const checkout = () => {
                 </div>
             </div>
         </div>
-    </AppLayout>
+    </AdminLayout>
 </template>
-
-<style scoped>
-.cursor-pointer {
-    cursor: pointer;
-}
-</style>
