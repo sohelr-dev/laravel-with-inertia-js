@@ -19,6 +19,8 @@ const logout = () => {
 
                 <template v-if="page.props.auth.user">
                     <Link class="nav-link text-white" href="/dashboard">Dashboard</Link>
+                    <Link class="nav-link text-white" href="/products">Products</Link>
+                    <Link class="nav-link text-white" href="/pos">POS</Link>
                     <button class="btn btn-sm btn-outline-light" @click="logout">Logout</button>
                 </template>
                 <template v-else>
