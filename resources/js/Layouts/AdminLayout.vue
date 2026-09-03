@@ -28,6 +28,12 @@ const nav = [
         match: '/products',
         icon: 'M21 8 12 3 3 8l9 5 9-5Zm0 0v8l-9 5-9-5V8m18 4-9 5-9-5',
     },
+    {
+        label: 'Customers',
+        href: '/customers',
+        match: '/customers',
+        icon: 'M17 20h5v-2a4 4 0 0 0-3-3.87M9 20H4v-2a4 4 0 0 1 3-3.87m5-3.13a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm6 0a4 4 0 1 0 0-8',
+    },
 ];
 
 const isActive = (item) => page.url === item.match || page.url.startsWith(item.match + '/') || page.url.startsWith(item.match + '?');

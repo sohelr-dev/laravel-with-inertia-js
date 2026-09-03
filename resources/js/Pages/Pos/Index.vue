@@ -6,6 +6,7 @@ import AdminLayout from '../../Layouts/AdminLayout.vue';
 const props = defineProps({
     products: Array,
     categories: Array,
+    customers: Array,
 });
 
 const page = usePage();
@@ -14,6 +15,27 @@ const search = ref('');
 const activeCategory = ref('');
 const cart = ref([]);
 const lastReceipt = ref(page.props.flash?.receipt ?? null);
+
+const customerSearch = ref('');
+const selectedCustomer = ref(null);
+
+const customerSuggestions = computed(() => {
+    if (!customerSearch.value) return [];
+
+    const term = customerSearch.value.toLowerCase();
+    return props.customers
+        .filter((customer) => customer.name.toLowerCase().includes(term) || (customer.phone ?? '').includes(term))
+        .slice(0, 6);
+});
+
+const selectCustomer = (customer) => {
+    selectedCustomer.value = customer;
+    customerSearch.value = '';
+};
+
+const clearCustomer = () => {
+    selectedCustomer.value = null;
+};
 
 const filteredProducts = computed(() => {
     return props.products.filter((product) => {
@@ -66,6 +88,7 @@ const subtotal = computed(() => cart.value.reduce((sum, line) => sum + line.prod
 
 const form = useForm({
     items: [],
+    customer_id: null,
     discount: 0,
     paid_amount: '',
     payment_method: 'cash',
@@ -73,19 +96,23 @@ const form = useForm({
 
 const total = computed(() => Math.max(subtotal.value - (Number(form.discount) || 0), 0));
 const changeDue = computed(() => Math.max((Number(form.paid_amount) || 0) - total.value, 0));
+const dueAmount = computed(() => Math.max(total.value - (Number(form.paid_amount) || 0), 0));
+const needsCustomerForDue = computed(() => dueAmount.value > 0 && !selectedCustomer.value);
 
 const formatMoney = (value) => Number(value).toFixed(2);
 
 const checkout = () => {
     lastReceipt.value = null;
     form.items = cart.value.map((line) => ({ product_id: line.product.id, quantity: line.quantity }));
+    form.customer_id = selectedCustomer.value?.id ?? null;
     form.paid_amount = form.paid_amount || total.value;
 
     form.post('/pos', {
         preserveScroll: true,
         onSuccess: () => {
             clearCart();
-            form.reset('discount', 'paid_amount');
+            clearCustomer();
+            form.reset('discount', 'paid_amount', 'customer_id');
             lastReceipt.value = page.props.flash?.receipt ?? null;
         },
     });
@@ -96,12 +123,18 @@ const checkout = () => {
     <AdminLayout title="Point of Sale">
         <div v-if="form.errors.items" class="alert alert-danger">{{ form.errors.items }}</div>
         <div v-if="form.errors.paid_amount" class="alert alert-danger">{{ form.errors.paid_amount }}</div>
+        <div v-if="form.errors.customer_id" class="alert alert-danger">{{ form.errors.customer_id }}</div>
 
-        <div v-if="lastReceipt" class="alert alert-success d-flex justify-content-between align-items-center">
+        <div v-if="lastReceipt" class="alert d-flex justify-content-between align-items-center" :class="Number(lastReceipt.due_amount) > 0 ? 'alert-warning' : 'alert-success'">
             <div>
                 <strong>{{ lastReceipt.invoice_no }}</strong> completed —
-                {{ formatMoney(lastReceipt.total) }} paid via {{ lastReceipt.payment_method }},
-                change due {{ formatMoney(lastReceipt.change_amount) }}.
+                {{ formatMoney(lastReceipt.total) }} total via {{ lastReceipt.payment_method }},
+                <template v-if="Number(lastReceipt.due_amount) > 0">
+                    <strong>{{ formatMoney(lastReceipt.due_amount) }} due</strong> from {{ lastReceipt.customer_name }}.
+                </template>
+                <template v-else>
+                    change due {{ formatMoney(lastReceipt.change_amount) }}.
+                </template>
             </div>
             <button type="button" class="btn-close" @click="lastReceipt = null"></button>
         </div>
@@ -188,6 +221,41 @@ const checkout = () => {
                             <span class="badge text-bg-light">{{ cartItemCount }} item{{ cartItemCount === 1 ? '' : 's' }}</span>
                         </div>
 
+                        <div class="mb-3">
+                            <label class="form-label small mb-1">Customer</label>
+
+                            <div v-if="selectedCustomer" class="d-flex justify-content-between align-items-center border rounded p-2">
+                                <div>
+                                    <div class="fw-semibold small">{{ selectedCustomer.name }}</div>
+                                    <div class="text-muted small" v-if="Number(selectedCustomer.total_due) > 0">
+                                        Existing due: {{ formatMoney(selectedCustomer.total_due) }}
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" @click="clearCustomer">Change</button>
+                            </div>
+
+                            <div v-else class="position-relative">
+                                <input
+                                    type="search"
+                                    class="form-control form-control-sm"
+                                    placeholder="Walk-in customer — search to attach one"
+                                    v-model="customerSearch"
+                                >
+                                <ul v-if="customerSuggestions.length > 0" class="list-group position-absolute w-100 shadow-sm" style="z-index: 5;">
+                                    <li
+                                        v-for="customer in customerSuggestions"
+                                        :key="customer.id"
+                                        class="list-group-item list-group-item-action py-2"
+                                        role="button"
+                                        @click="selectCustomer(customer)"
+                                    >
+                                        <div class="small fw-semibold">{{ customer.name }}</div>
+                                        <div class="text-muted small">{{ customer.phone ?? 'No phone' }}</div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
                         <div class="flex-grow-1" style="overflow-y: auto; max-height: 300px;">
                             <div v-if="cart.length === 0" class="text-muted text-center py-4">Cart is empty — tap a product to add it.</div>
 
@@ -236,15 +304,23 @@ const checkout = () => {
                             <input id="paid_amount" type="number" min="0" step="0.01" class="form-control form-control-sm" v-model="form.paid_amount" :placeholder="formatMoney(total)">
                         </div>
 
-                        <div class="d-flex justify-content-between text-success mb-3">
+                        <div v-if="dueAmount > 0" class="d-flex justify-content-between text-danger mb-2">
+                            <span>Amount Due (credit)</span>
+                            <span class="fw-semibold">{{ formatMoney(dueAmount) }}</span>
+                        </div>
+                        <div v-else class="d-flex justify-content-between text-success mb-2">
                             <span>Change Due</span>
                             <span class="fw-semibold">{{ formatMoney(changeDue) }}</span>
+                        </div>
+
+                        <div v-if="needsCustomerForDue" class="text-danger small mb-3">
+                            Select a customer above to sell on credit — walk-in sales must be paid in full.
                         </div>
 
                         <button
                             type="button"
                             class="btn btn-primary w-100"
-                            :disabled="cart.length === 0 || form.processing"
+                            :disabled="cart.length === 0 || form.processing || needsCustomerForDue"
                             @click="checkout"
                         >
                             <span v-if="form.processing" class="spinner-border spinner-border-sm me-2"></span>

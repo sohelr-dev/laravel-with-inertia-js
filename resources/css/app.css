@@ -320,3 +320,97 @@ body {
     border-color: var(--bd-green);
     color: #fff;
 }
+
+/* ---------- Public site (Home / About) ---------- */
+
+.site-navbar {
+    background: #fff;
+    border-bottom: 1px solid #e6e9e8;
+}
+
+.site-navbar .nav-link {
+    color: #445049;
+    font-weight: 500;
+}
+
+.site-navbar .nav-link:hover {
+    color: var(--bd-green);
+}
+
+.site-navbar .navbar-brand {
+    color: #1c2b27;
+}
+
+.site-footer {
+    background: #fff;
+    border-top: 1px solid #e6e9e8;
+}
+
+.hero {
+    background: linear-gradient(135deg, var(--bd-green-dark), var(--bd-green) 60%);
+    color: #fff;
+}
+
+.hero-badge {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    font-weight: 500;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+}
+
+.hero-title {
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    font-weight: 800;
+    line-height: 1.15;
+}
+
+.hero-subtitle {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 1.05rem;
+    max-width: 34rem;
+}
+
+.hero-panel {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 16px;
+    padding: 1.5rem;
+    backdrop-filter: blur(2px);
+}
+
+.hero-panel__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+    color: #fff;
+}
+
+.hero-panel__row:last-of-type {
+    border-bottom: 0;
+}
+
+.hero-panel__note {
+    margin-top: 0.75rem;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.feature-card {
+    background: #fff;
+    border: 1px solid #e6e9e8;
+    border-radius: 14px;
+    padding: 1.5rem;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(16, 24, 22, 0.08);
+}
+
+.cta-band {
+    background: linear-gradient(135deg, var(--bd-red), #d81f38);
+}

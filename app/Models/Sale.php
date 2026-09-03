@@ -14,11 +14,13 @@ class Sale extends Model
     protected $fillable = [
         'invoice_no',
         'user_id',
+        'customer_id',
         'subtotal',
         'discount',
         'total',
         'paid_amount',
         'change_amount',
+        'due_amount',
         'payment_method',
     ];
 
@@ -30,12 +32,18 @@ class Sale extends Model
             'total' => 'decimal:2',
             'paid_amount' => 'decimal:2',
             'change_amount' => 'decimal:2',
+            'due_amount' => 'decimal:2',
         ];
     }
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
     }
 
     public function items(): HasMany

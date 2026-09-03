@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
 use Illuminate\Http\RedirectResponse;
@@ -23,6 +24,7 @@ class PosController extends Controller
         return Inertia::render('Pos/Index', [
             'products' => $products,
             'categories' => $products->pluck('category')->filter()->unique()->values(),
+            'customers' => Customer::orderBy('name')->get(['id', 'name', 'phone', 'total_due']),
         ]);
     }
 
@@ -32,12 +34,19 @@ class PosController extends Controller
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'customer_id' => ['nullable', 'integer', 'exists:customers,id'],
             'discount' => ['nullable', 'numeric', 'min:0'],
             'paid_amount' => ['required', 'numeric', 'min:0'],
             'payment_method' => ['required', 'string', 'in:cash,card,mobile'],
         ]);
 
         $sale = DB::transaction(function () use ($validated, $request) {
+            $customer = null;
+
+            if (! empty($validated['customer_id'])) {
+                $customer = Customer::whereKey($validated['customer_id'])->lockForUpdate()->first();
+            }
+
             $productIds = collect($validated['items'])->pluck('product_id');
             $products = Product::whereIn('id', $productIds)->lockForUpdate()->get()->keyBy('id');
 
@@ -65,23 +74,32 @@ class PosController extends Controller
 
             $discount = $validated['discount'] ?? 0;
             $total = max($subtotal - $discount, 0);
+            $paidAmount = $validated['paid_amount'];
 
-            if ($validated['paid_amount'] < $total) {
+            if ($paidAmount < $total && ! $customer) {
                 throw ValidationException::withMessages([
-                    'paid_amount' => 'Paid amount is less than the total due.',
+                    'paid_amount' => 'Paid amount is less than the total. Select a customer to sell on credit (due).',
                 ]);
             }
+
+            $dueAmount = max($total - $paidAmount, 0);
 
             $sale = Sale::create([
                 'invoice_no' => 'INV-'.now()->format('Ymd-His').'-'.random_int(100, 999),
                 'user_id' => $request->user()->id,
+                'customer_id' => $customer?->id,
                 'subtotal' => $subtotal,
                 'discount' => $discount,
                 'total' => $total,
-                'paid_amount' => $validated['paid_amount'],
-                'change_amount' => $validated['paid_amount'] - $total,
+                'paid_amount' => $paidAmount,
+                'change_amount' => max($paidAmount - $total, 0),
+                'due_amount' => $dueAmount,
                 'payment_method' => $validated['payment_method'],
             ]);
+
+            if ($dueAmount > 0 && $customer) {
+                $customer->increment('total_due', $dueAmount);
+            }
 
             foreach ($lineItems as $lineItem) {
                 $sale->items()->create([
@@ -105,6 +123,8 @@ class PosController extends Controller
                 'total' => $sale->total,
                 'paid_amount' => $sale->paid_amount,
                 'change_amount' => $sale->change_amount,
+                'due_amount' => $sale->due_amount,
+                'customer_name' => $sale->customer?->name,
                 'payment_method' => $sale->payment_method,
             ]);
     }
